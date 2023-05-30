@@ -3,8 +3,11 @@ package com.hmdp.config;
 import com.hmdp.interceptor.loginInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import javax.annotation.Resource;
 
 /**
  * @author Black_ghost
@@ -19,10 +22,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Slf4j
 @Configuration
 public class InterceptorConfig implements WebMvcConfigurer {
+
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         //创建自定义拦截器对象
-        final loginInterceptor loginInterceptor = new loginInterceptor();
+        //使用redis+token完成用户验证时需要StringRedisTemplate,在这里注入的
+        final loginInterceptor loginInterceptor = new loginInterceptor(stringRedisTemplate);
         registry.addInterceptor(loginInterceptor).excludePathPatterns(
                 "/shop/**",
                 "/voucher/**",
