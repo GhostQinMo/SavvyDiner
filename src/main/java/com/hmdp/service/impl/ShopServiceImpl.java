@@ -46,11 +46,23 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             log.info("从缓存中拿去商铺信息：商铺id为{}",id);
             return Result.ok(shop);
         }
+        //解决缓存穿透：缓存空串，因为StrUtil.isBlankIfStr(shopjson)会把""也判断为null,所以这里需要再次判断是否为空，只有真的为null采取查询数据库
+
+        if (!Objects.equals(shopjson, null)) {
+            return  Result.fail("发生缓存穿透，请输入正确的查询条件");
+        }
+
         //4. 没有命中，这根据id在数据库中查询商铺信息
         final Shop shopById = getById(id);
 
         // 5. 数据库中不存在则返回404 (内容不存在)
         if (!Objects.nonNull(shopById)){
+            //解决缓存穿透：缓存空串
+            stringRedisTemplate.opsForValue().set(
+                    RedisConstants.CACHE_SHOP_KEY+id.toString(),
+                    "",
+                    RedisConstants.CACHE_NULL_TTL,
+                    TimeUnit.MINUTES);
            return  Result.fail("商品不存在");
         }
         //6.存在该商铺，则保存商铺信息到redis，然后返回
