@@ -58,9 +58,9 @@ public class ShopController {
      */
     @PutMapping
     public Result updateShop(@RequestBody Shop shop) {
-        // 写入数据库
-        shopService.updateById(shop);
-        return Result.ok();
+
+        //商铺缓存优化：根据id修改店铺信息，采用修改数据库，再删除缓存，下次查询是在更新缓存
+        return shopService.updatebyid(shop);
     }
 
     /**

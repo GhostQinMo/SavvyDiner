@@ -15,4 +15,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface IShopService extends IService<Shop> {
 
     Result selectById(Long id);
+
+    Result updatebyid(Shop shop);
 }
