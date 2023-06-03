@@ -60,6 +60,12 @@
             <version>3.4.3</version>
         </dependency>
 
+<!--        事务需要aspectj这个依赖-->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+
 
         <!--hutool-->
         <dependency>
