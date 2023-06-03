@@ -272,6 +272,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }
         //否 ，直接返回逻辑过期的数据
         return Result.ok(Hotshop);
+
     }
 
 
