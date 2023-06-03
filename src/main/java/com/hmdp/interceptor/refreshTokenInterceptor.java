@@ -52,6 +52,7 @@ public class refreshTokenInterceptor implements HandlerInterceptor {
         String user_key=RedisConstants.LOGIN_USER_KEY+token;
         // 第二次优化：2.从redis查询用户信息
         final Map<Object, Object> userDTOforMap = stringRedisTemplate.opsForHash().entries(user_key);
+        //如果用户信息为空则进入下一个拦截器
         if (userDTOforMap.isEmpty()){
             return true;
         }

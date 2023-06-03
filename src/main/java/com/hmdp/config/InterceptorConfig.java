@@ -40,6 +40,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
                 "/blog/hot",
                 "/user/code",
                 "/user/login"
+//                ,"/voucher-order/**"
         ).order(1);
         registry.addInterceptor(new refreshTokenInterceptor(stringRedisTemplate)).addPathPatterns("/**").order(0); //默认拦截所有请求，需要保证这个拦截器在最前面
 
