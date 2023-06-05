@@ -2,8 +2,13 @@ package com.hmdp.utils;
 
 
 import cn.hutool.core.lang.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,6 +21,7 @@ import java.util.concurrent.TimeUnit;
  * @Description 使用redis实现的分布式锁
  **/
 
+@Slf4j
 public class SimpleDriRedisLock implements ILock {
     //操作redis的RedisTemplate
     private StringRedisTemplate stringRedisTemplate;
@@ -29,6 +35,17 @@ public class SimpleDriRedisLock implements ILock {
     public SimpleDriRedisLock(StringRedisTemplate stringRedisTemplate, String name) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.name = name;
+    }
+
+    //提前加载脚本
+    private static DefaultRedisScript<Long> UNLOCKSCRIPT;
+
+    static {
+        UNLOCKSCRIPT=new DefaultRedisScript<>();
+        //加载外部lua脚本文件
+        UNLOCKSCRIPT.setLocation(new ClassPathResource("Unlock.lua"));
+        //设置脚本返回值
+        UNLOCKSCRIPT.setResultType(Long.class);
     }
 
     /**
@@ -57,7 +74,7 @@ public class SimpleDriRedisLock implements ILock {
         return Boolean.TRUE.equals(aBoolean);
     }
 
-    @Override
+    /*@Override
     public void unlock() {
         //优化：使用锁标识防止锁误删
         //删锁前判断是否是自己的锁
@@ -67,5 +84,23 @@ public class SimpleDriRedisLock implements ILock {
         if (result.equals(ThreadID)){
             final Boolean delete = stringRedisTemplate.delete(PREFIX + name);
         }
-    }
+    }*/
+    //使用lua脚本保证查询锁和删除锁的原子性
+     @Override
+    public void unlock() {
+        //优化：使用锁标识防止锁误删
+        //删锁前判断是否是自己的锁
+        //如果是自己的锁则释放锁
+        //执行lua脚本（这里使用静态代码块提前加载脚本）
+         final String ThreadID = ID_PREFIX+Thread.currentThread().getId();
+
+         final Long result = stringRedisTemplate.execute(UNLOCKSCRIPT,
+                 (List<String>) Collections.singleton(PREFIX + name),
+                 ThreadID);
+
+         if (result==0){
+             log.debug("释放锁失败");
+         }
+     }
+
 }

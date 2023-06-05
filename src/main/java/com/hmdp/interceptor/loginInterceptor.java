@@ -30,6 +30,7 @@ public class loginInterceptor implements HandlerInterceptor {
             return false;
         }
         //否则，用户存在
+        log.info("用户存在");
         return true;
     }
 
