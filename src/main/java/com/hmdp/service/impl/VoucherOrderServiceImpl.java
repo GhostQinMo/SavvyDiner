@@ -8,9 +8,10 @@ import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.hmdp.utils.IdGenerateFactory;
-import com.hmdp.utils.SimpleDriRedisLock;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -49,6 +50,18 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     //使用StringRedisTemplate获取分布式锁
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    //使用redisson来获取分布式锁
+
+    @Resource
+    private RedissonClient getRedisClient;
+
+    @Resource
+    private  RedissonClient getRedisClient1;
+
+    @Resource
+    private  RedissonClient getRedisClient2;
+
 
     @Override
     public Result  seckillVoucher(Long voucherId) {
@@ -90,9 +103,29 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }*/
         //1. 尝试获取锁
         String key="voucherOrder:"+userId;
-        SimpleDriRedisLock simpleDriRedisLock=new SimpleDriRedisLock(stringRedisTemplate,key);
+//        SimpleDriRedisLock simpleDriRedisLock=new SimpleDriRedisLock(stringRedisTemplate,key);
         //TODO 这里为了断点测试，key的过期时间设置的久一些
-        final boolean isLock = simpleDriRedisLock.tryLock(300);
+//        final boolean isLock = simpleDriRedisLock.tryLock(300);
+
+
+        //使用redisson分布式客户端来获取锁
+        //得到锁实例,根据名字获取锁实例
+//        final RLock lock = getRedisClient.getLock(key);
+
+        //使用redisson提供的mutiLock（联锁）解决主从一致性带来的锁失效问题
+
+        final RLock lock = getRedisClient.getLock(key);
+        /*final RLock lock0 = getRedisClient.getLock(key);
+        final RLock lock1 = getRedisClient1.getLock(key);
+        final RLock lock2 = getRedisClient2.getLock(key);
+
+        final RLock lock = getRedisClient1.getMultiLock(lock0, lock1, lock2);*/
+
+        //尝试获取锁
+        final boolean isLock =  lock.tryLock();
+        //tryLock()方法的第一个参数获取锁的最大等待时间（获取失败可重试），默认值为-1 标识不重试，一单失败立刻返回
+        // ，第二参数为锁的过期时间，
+        // 第三个参数为单位
 
         //失败
         if (!isLock){
@@ -109,7 +142,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             e.printStackTrace();
         } finally {
             //释放锁
-            simpleDriRedisLock.unlock();
+//            simpleDriRedisLock.unlock();
+            //释放分布式锁
+            lock.unlock();
         }
         return null;
     }

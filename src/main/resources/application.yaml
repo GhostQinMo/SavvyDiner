@@ -24,3 +24,5 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
+reids:
+  address: redis://192.168.241.128:6379

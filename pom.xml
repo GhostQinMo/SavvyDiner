@@ -73,6 +73,15 @@
             <artifactId>hutool-all</artifactId>
             <version>5.7.17</version>
         </dependency>
+
+<!--        Redisson java 分布式客户端-->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.13.6</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
