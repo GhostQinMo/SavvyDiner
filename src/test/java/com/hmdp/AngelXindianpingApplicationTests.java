@@ -21,6 +21,7 @@ public class AngelXindianpingApplicationTests {
     @Resource
     private ShopServiceImpl shopServiceimpl;
 
+    //TODO 测试前一定需要使用先启动这个测试单元，使得这些热点数据在缓存中，因为代码中使用的是逻辑过期来判断缓存是否过期的，如果不预热数据则查不到数据
     @Test
     public void addHostData(){
         shopServiceimpl.addHotShop(1L,100L);

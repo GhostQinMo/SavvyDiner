@@ -57,11 +57,11 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }*/
 
 
-        //使用逻辑过期解决缓存击穿
+        //使用逻辑过期解决缓存击穿，
         Result result = CacheBreakdown_expireLogic(id);
         if (result == null) {
             log.info("查询结果为null");
-            return Result.fail("空指针异常");
+            return Result.fail("空指针异常,由于使用的是逻辑过期，所以这里查询的数据一定在缓存中，需要体检预热");
         }
         return result;
     }

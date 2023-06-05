@@ -8,12 +8,16 @@ import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.hmdp.utils.IdGenerateFactory;
+import com.hmdp.utils.SimpleDriRedisLock;
 import com.hmdp.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 /**
@@ -26,6 +30,7 @@ import java.time.LocalDateTime;
  */
 
 @Service
+@Slf4j
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
 
     //注入需要的实例
@@ -37,12 +42,16 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
 
     //注入订单service
-
     @Autowired
     private IVoucherOrderService voucherOrderService;
 
+
+    //使用StringRedisTemplate获取分布式锁
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
-    public Result seckillVoucher(Long voucherId) {
+    public Result  seckillVoucher(Long voucherId) {
         // 1.查询优惠券
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
         // 2.判断秒杀是否开始
@@ -67,16 +76,42 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             /*3.2、锁需要相同，但是Long对象可能是由long自动装箱来的，所以每次来的userId可能多是一个新对象，
             所以这里用了toString()方法，但是Long的toString方法底层也是每次创建一个新的String对象返回，所以
             这里用了intern()方法保证了同一个user使用同一个锁，使得锁的粒度降低了
+            关于intern()方法在JVM中讲到过
              */
         Long userId = UserHolder.getUser().getId();
-        synchronized(userId.toString().intern()){
-            /*3.3、这里巨坑：这个createVoucherOrder方法在这里调用的是使用的是this来调用的，而不是spring为
+
+        //优化：使用redis完成的分布式锁，不使用synchronized
+        /*synchronized(userId.toString().intern()){
+            *//*3.3、这里巨坑：这个createVoucherOrder方法在这里调用的是使用的是this来调用的，而不是spring为
             IVoucherOrderService生成的动态代理对象来调用的，而@Transactinal事务是基于spring的这个动态代理对象才能实现的
             所以这里通过AopContext.currentProxy()静态方法得到spring动态代理生成的代理对象
-             */
-             IVoucherOrderService iVoucherOrderService = (IVoucherOrderService) AopContext.currentProxy();
-            return iVoucherOrderService.createVoucherOrder(voucherId);
+             *//*
+
+        }*/
+        //1. 尝试获取锁
+        String key="voucherOrder:"+userId;
+        SimpleDriRedisLock simpleDriRedisLock=new SimpleDriRedisLock(stringRedisTemplate,key);
+        //TODO 这里为了断点测试，key的过期时间设置的久一些
+        final boolean isLock = simpleDriRedisLock.tryLock(300);
+
+        //失败
+        if (!isLock){
+            log.debug("获取锁失败");
+            return Result.fail("优惠卷不能重复购买");
         }
+        //成功
+        try {
+            //获取当前类的代理对象
+            IVoucherOrderService iVoucherOrderService = (IVoucherOrderService) AopContext.currentProxy();
+            //创建订单，使用spring事务（spring事务底层是动态代理）
+            return iVoucherOrderService.createVoucherOrder(voucherId);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } finally {
+            //释放锁
+            simpleDriRedisLock.unlock();
+        }
+        return null;
     }
 
 
