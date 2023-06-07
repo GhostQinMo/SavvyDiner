@@ -38,7 +38,7 @@ public class SimpleDriRedisLock implements ILock {
     }
 
     //提前加载脚本
-    private static DefaultRedisScript<Long> UNLOCKSCRIPT;
+    private static final DefaultRedisScript<Long> UNLOCKSCRIPT;
 
     static {
         UNLOCKSCRIPT=new DefaultRedisScript<>();

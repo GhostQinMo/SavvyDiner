@@ -32,7 +32,7 @@ public class RedissonConfig {
     }
     //使用redisson的mutiLock(联锁)解决主从一致性带来的锁失效问题
 
-    @Bean
+   /* @Bean
     public RedissonClient getRedisClient1(){
         //配置
         Config config =new Config();
@@ -40,9 +40,9 @@ public class RedissonConfig {
         config.useSingleServer().setAddress("redis://192.168.241.128:6479");
         //创建redisson客户端
         return Redisson.create(config);
-    }
+    }*/
 
-    @Bean
+  /*  @Bean
     public RedissonClient getRedisClient2(){
         //配置
         Config config =new Config();
@@ -50,5 +50,5 @@ public class RedissonConfig {
         config.useSingleServer().setAddress("redis://192.168.241.128:6579");
         //创建redisson客户端
         return Redisson.create(config);
-    }
+    }*/
 }
