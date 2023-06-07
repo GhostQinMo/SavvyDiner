@@ -1,5 +1,6 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.VoucherOrder;
@@ -14,6 +15,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -21,15 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.util.Collections;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.RedisConstants.ORDER_LOCK_PREFIX;
 import static com.hmdp.utils.RedisConstants.SECKILL_ORDER_KEY;
-
 
 
 /**
@@ -39,7 +42,7 @@ import static com.hmdp.utils.RedisConstants.SECKILL_ORDER_KEY;
  * @description :616  An unchanging God  Qin_Love
  * @vesion 1.0.0
  * @CreateDate 2023-06-06 23:01:10
- * @Description  秒杀优惠卷下单
+ * @Description 秒杀优惠卷下单
  **/
 
 @Service
@@ -69,10 +72,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private RedissonClient getRedisClient;
 
     @Resource
-    private  RedissonClient getRedisClient1;
+    private RedissonClient getRedisClient1;
 
     @Resource
-    private  RedissonClient getRedisClient2;
+    private RedissonClient getRedisClient2;
 
 
     /*@Override
@@ -107,7 +110,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
         //优化：使用redis完成的分布式锁，不使用synchronized
         *//*synchronized(userId.toString().intern()){
-            *//**//*3.3、这里巨坑：这个createVoucherOrder方法在这里调用的是使用的是this来调用的，而不是spring为
+     *//**//*3.3、这里巨坑：这个createVoucherOrder方法在这里调用的是使用的是this来调用的，而不是spring为
             IVoucherOrderService生成的动态代理对象来调用的，而@Transactinal事务是基于spring的这个动态代理对象才能实现的
             所以这里通过AopContext.currentProxy()静态方法得到spring动态代理生成的代理对象
              *//**//*
@@ -168,10 +171,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     //提前拿到代理对象，以便异步线程中使用
     //获取当前类的代理对象
-    public IVoucherOrderService iVoucherOrderService ;
+    public IVoucherOrderService iVoucherOrderService;
 
     static {
-        SECKILLSCRIPT=new DefaultRedisScript<>();
+        SECKILLSCRIPT = new DefaultRedisScript<>();
         //加载外部lua脚本文件
         SECKILLSCRIPT.setLocation(new ClassPathResource("seckill.lua"));
         //设置脚本返回值
@@ -181,9 +184,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     //异步处理线程池
     private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
 
-    //使用jdk自带的阻塞队列
-    private BlockingQueue<VoucherOrder> orderTasks =new ArrayBlockingQueue<>(1024 * 1024);
-
 
     //在类初始化之后执行，因为当这个类初始化好了之后，随时都是有可能要执行的
     @PostConstruct
@@ -191,7 +191,49 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
     }
 
+    //优化：使用消息队列+redis实现秒杀，提高并发能力（这里的消息队列不再是jVM中的阻塞队列了，而是广泛应用的消息队列框架，但是这里演示使用的是
+    // redis5.0新增的消息队列stream类型）
 
+    //队列名字
+    private final static  String STRING_NAME="stream.orders";
+    private class VoucherOrderHandler implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
+                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                            Consumer.from("g1", "c1"),
+                            StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+                            StreamOffset.create(STRING_NAME, ReadOffset.lastConsumed())
+                    );
+                    // 2.判断订单信息是否为空
+                    if (list == null || list.isEmpty()) {
+                        // 如果为null，说明没有消息，继续下一次循环
+                        continue;
+                    }
+
+                    //添加的步骤： 解析数据,因为这里是获取一个，所以直接取得索引位为0的消息
+                    MapRecord<String, Object, Object> record = list.get(0);
+                    Map<Object, Object> value = record.getValue();
+                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
+                    // 3.创建订单
+                    handleVoucherOrder(voucherOrder);
+                    // 4.确认消息 XACK    STRING_NAME 表示stream队列的名字
+                    stringRedisTemplate.opsForStream().acknowledge(STRING_NAME, "g1", record.getId());
+                } catch (Exception e) {
+                    log.error("处理订单异常", e);
+                    //处理异常消息
+                    handlePendingList();
+                }
+            }
+        }
+
+
+/*  优化：这里使用的JVM中的阻塞队列，而优化之后使用的是消息队列
+    //使用jdk自带的阻塞队列
+    private BlockingQueue<VoucherOrder> orderTasks = new ArrayBlockingQueue<>(1024 * 1024);
     // 当初始化完毕后，就会去从对列中去拿信息
     private class VoucherOrderHandler implements Runnable {
 
@@ -207,13 +249,13 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     log.error("处理订单异常", e);
                 }
             }
-        }
+        }*/
 
         private void handleVoucherOrder(VoucherOrder voucherOrder) {
             //1.获取用户
             Long userId = voucherOrder.getUserId();
 
-            String key=ORDER_LOCK_PREFIX+userId;
+            String key = ORDER_LOCK_PREFIX + userId;
 
             // 2.创建锁对象
             RLock redisLock = getRedisClient.getLock(key);
@@ -235,44 +277,70 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 redisLock.unlock();
             }
         }
+
+        private void handlePendingList() {
+            while (true) {
+                try {
+                    // 1.获取pending-list中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 0
+                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                            Consumer.from("g1", "c1"),
+                            StreamReadOptions.empty().count(1),
+                            StreamOffset.create(STRING_NAME, ReadOffset.from("0"))  //0表示从pedding-list中获取为确认的消息
+                    );
+                    // 2.判断订单信息是否为空（一般进入到这里的多是有异常的）
+                    if (list == null || list.isEmpty()) {
+                        // 如果为null，说明没有异常消息，结束循环
+                        break;
+                    }
+                    // 解析数据
+                    MapRecord<String, Object, Object> record = list.get(0);
+                    Map<Object, Object> value = record.getValue();
+                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
+                    // 3.创建订单
+                    createVoucherOrder(voucherOrder);
+                    // 4.确认消息 XACK   STRING_NAME 表示stream队列的名字
+                    stringRedisTemplate.opsForStream().acknowledge(STRING_NAME, "g1", record.getId());
+                } catch (Exception e) {
+                    log.error("处理pendding订单异常", e);
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(50);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
-         @Override
-        public Result  seckillVoucher(Long voucherId) {
+
+    @Override
+    public Result seckillVoucher(Long voucherId) {
 
         //1.执行lua脚本（逻辑包括：库存是否充足，用户是否以购买）
 
         //用户id
         final Long userid = UserHolder.getUser().getId();
-        final Long res = stringRedisTemplate.execute(
-                SECKILLSCRIPT,
-                Collections.emptyList(),
-                voucherId.toString(),userid.toString()
-                );
-
-        final int r = res.intValue();
-        if (r!=0){
-            return  Result.fail(r==1? "库存不足": "此卷仅限每人一张");
-        }
-
-        //如果下单成功，则将优惠卷id、用户id、订单id保存到阻塞队列
         //1. 生成订单id
         final long seckillOrderId = idGenerateFactory.getid(SECKILL_ORDER_KEY);
 
-        // 将成功下单的秒杀订单保存到阻塞队列中
-        VoucherOrder voucherOrder = new VoucherOrder();
-
-        voucherOrder.setId(seckillOrderId);
-        // 2.4.用户id
-        voucherOrder.setUserId(seckillOrderId);
-        // 2.5.代金券id
-        voucherOrder.setVoucherId(voucherId);
-
-
-        //3. 给代理对象赋值（这一步提前）
+        //3. 给代理对象赋值，因为spring的事务需要代理对象（这一步需要提前，不然很可能异步线程在获取这个实例的时候出现空指针异常）
         iVoucherOrderService = (IVoucherOrderService) AopContext.currentProxy();
-        // 2.6.放入阻塞队列
-        orderTasks.add(voucherOrder);
+
+        final Long res = stringRedisTemplate.execute(
+                SECKILLSCRIPT,
+                Collections.emptyList(),
+                voucherId.toString(), userid.toString(), seckillOrderId + ""
+        );
+
+        // 这里res不可能返回null，所以没有关系
+        final int r = res.intValue();
+        if (r != 0) {
+            return Result.fail(r == 1 ? "库存不足" : "此卷仅限每人一张");
+        }
+
+        //如果下单成功，则将优惠卷id、用户id、订单id保存到阻塞队列
+
+
 
         //4.返回订单id
         return Result.ok(seckillOrderId);
@@ -280,7 +348,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     }
 
 
-    //查询不需要事务的保证，减低事务包括的范围（本来事务添加seckillVoucher()方法上的）
+    //这里查询不需要事务的保证，减低事务包括的范围（本来事务添加seckillVoucher()方法上的）
     @Override
     @Transactional
     public void createVoucherOrder(VoucherOrder voucherOrder) {
@@ -294,7 +362,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (count > 0) {
             // 用户已经购买过了
             log.error("用户已经购买过了");
-            return ;
+            return;
         }
 
         // 6.扣减库存
@@ -305,7 +373,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (!success) {
             // 扣减失败
             log.error("库存不足");
-            return ;
+            return;
         }
         save(voucherOrder);
 
