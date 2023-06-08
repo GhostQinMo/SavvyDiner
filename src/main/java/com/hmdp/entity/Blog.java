@@ -40,6 +40,7 @@ public class Blog implements Serializable {
      * 用户id
      */
     private Long userId;
+    //由于查看blog是需要显示用户信息，而blog表中不包含这些字段，这里使用在etity中加字段的方式返回用户数据+blog数据给前端
     /**
      * 用户图标
      */

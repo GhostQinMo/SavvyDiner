@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @description :616  An unchanging God  Qin_Love
  * @vesion 1.0.0
  * @CreateDate 2023-06-01 17:03:16
- * @Description 热点数据
+ * @Description 热点数据（DTO）
  **/
 @Data
 @AllArgsConstructor
