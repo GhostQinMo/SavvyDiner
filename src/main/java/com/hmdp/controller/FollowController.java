@@ -26,10 +26,17 @@ public class FollowController {
     public Result follow(@PathVariable("id") Long followUserId, @PathVariable("isFollow") Boolean isFollow) {
         return followService.follow(followUserId, isFollow);
     }
-    //取消关注
+    //取消关注(查看是否关注用户)
     @GetMapping("/or/not/{id}")
     public Result isFollow(@PathVariable("id") Long followUserId) {
         return followService.isFollow(followUserId);
+    }
+
+    //查询与当前用户的共同关注
+    @GetMapping("/common/{id}")
+    public Result commonsUser(@PathVariable(value="id") Long userid){
+
+        return followService.commonsUser(userid);
     }
 
 }

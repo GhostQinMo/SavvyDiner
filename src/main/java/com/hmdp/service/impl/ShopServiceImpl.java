@@ -61,7 +61,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         Result result = CacheBreakdown_expireLogic(id);
         if (result == null) {
             log.info("查询结果为null");
-            return Result.fail("空指针异常,由于使用的是逻辑过期，所以这里查询的数据一定在缓存中，需要体检预热");
+            return Result.fail("空指针异常,由于使用的是逻辑过期，所以这里查询的数据一定在缓存中，需要提前预热");
         }
         return result;
     }
