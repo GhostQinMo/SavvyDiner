@@ -69,7 +69,7 @@ public class ShopController {
      * @param current 页码
      * @return 商铺列表
      */
-    @GetMapping("/of/type")
+    /*@GetMapping("/of/type")
     public Result queryShopByType(
             @RequestParam("typeId") Integer typeId,
             @RequestParam(value = "current", defaultValue = "1") Integer current
@@ -80,6 +80,16 @@ public class ShopController {
                 .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
         // 返回数据
         return Result.ok(page.getRecords());
+    }*/
+    //优化：如果用户允许访问他的位置信息，那么就根据他的位置信息来查询附近的商铺，如果没有则直接查询数据库
+    @GetMapping("/of/type")
+    public Result queryShopByType(
+            @RequestParam("typeId") Integer typeId,
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "x", required = false) Double x,
+            @RequestParam(value = "y", required = false) Double y
+    ) {
+        return shopService.queryShopByType(typeId, current, x, y);
     }
 
     /**
