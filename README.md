@@ -13,7 +13,7 @@
 
 ## 技术栈
 
-- Spring MVC  、SpringBoot 、RabbitMQ 、Netyy
+- Spring MVC  、SpringBoot 、RabbitMQ 、Netty
 
 - MySQL 、Redis
 - HTML、CSS、JavaScript 、VUE
