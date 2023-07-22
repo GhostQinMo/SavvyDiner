@@ -148,7 +148,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         final Map<String, Object> stringObjectMap = BeanUtil.beanToMap(
                 userDTO,
                 new HashMap<>(),
-                CopyOptions.create().setFieldValueEditor((field_name,field_value)->{
+                CopyOptions.create().setIgnoreNullValue(true)
+                        .setFieldValueEditor((field_name,field_value)->{
                 return  field_value.toString();   //参数说明，参数1为hash中的字段名，参数2为字段名对应的value,返回值为自定义自定义值
                 })
         );
