@@ -273,7 +273,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             if (expireDataLogic1.isAfter(LocalDateTime.now())){
                 return Result.ok(JSONUtil.toBean((JSONObject) hotData.getObject(),Shop.class));
             }
-            //是，开启独立的线程来重建缓存，然后返回过期数据(这里使用线程池)
+            //是过期了，开启独立的线程来重建缓存，然后返回过期数据(这里使用线程池)
             final Future<?> future = executorService.submit(() -> {
                 //重建缓存
                 addHotShop(id, 20L);
@@ -281,7 +281,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }
         //否 ，直接返回逻辑过期的数据
         return Result.ok(Hotshop);
-
     }
 
 
