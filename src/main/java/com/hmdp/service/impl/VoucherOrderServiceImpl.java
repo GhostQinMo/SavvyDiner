@@ -332,7 +332,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 voucherId.toString(), userid.toString(), seckillOrderId + ""
         );
 
-        // 这里res不可能返回null，所以没有关系
+        // 这里res不可能返回null，所以没有关系，r 的值在每个线程内部是独立的，不会存在并发问题。
         final int r = res.intValue();
         if (r != 0) {
             return Result.fail(r == 1 ? "库存不足" : "此卷仅限每人一张");

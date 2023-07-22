@@ -11,7 +11,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -158,5 +157,25 @@ public class AngelXindianpingApplicationTests {
             }
             stringRedisTemplate.opsForGeo().add(key, locations);
         }
+    }
+
+
+    //使用hyperLogLog实现UV统计
+    @Test
+    public void UVCountTest(){
+        //1. 定义key的名字
+        String UV_key="usersUV";
+        String[] userids=new String[10000];
+        //2.插入1000000用户数据
+        for (int i = 0; i < 1000000; i++) {
+            int j=i%10000;
+            userids[j]="userid"+i;
+            if (j==9999){
+                stringRedisTemplate.opsForHyperLogLog().add(UV_key,userids);
+            }
+        }
+        //3.统计UV数据
+        final Long size = stringRedisTemplate.opsForHyperLogLog().size(UV_key);
+        System.out.println(size);
     }
 }
