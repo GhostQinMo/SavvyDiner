@@ -13,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -160,6 +163,7 @@ public class AngelXindianpingApplicationTests {
     }
 
 
+
     //使用hyperLogLog实现UV统计
     @Test
     public void UVCountTest(){
@@ -177,5 +181,24 @@ public class AngelXindianpingApplicationTests {
         //3.统计UV数据
         final Long size = stringRedisTemplate.opsForHyperLogLog().size(UV_key);
         System.out.println(size);
+    }
+
+
+    /**
+     * 测试批处理优化
+     */
+    @Test
+    public void TestMset(){
+        final SetOperations<String, String> mset = stringRedisTemplate.opsForSet();
+        final HashOperations<String, Object, Object> mhash = stringRedisTemplate.opsForHash();
+        final ValueOperations<String, String> mstr = stringRedisTemplate.opsForValue();
+    }
+
+    /**
+     * 测试pipeline的性能
+     */
+    @Test
+    public void Testpipelined(){
+
     }
 }

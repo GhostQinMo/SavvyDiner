@@ -74,8 +74,8 @@ public class refreshTokenInterceptor implements HandlerInterceptor {
         //如果存在而保存到ThreadLocal中，方便后面的业务逻辑使用， 这里使用了自己写的一个工具类
         // 第一次优化：传给前端的用户不需要完整的用户信息，而只需要用户页面需要的信息即可（用户名，icon,id）
         //这里使用hutool的工具包复制对象
-//        final UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);  //第二次优化注释掉的
-//        UserHolder.saveUser(user);   // 修改前的
+        //final UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);  //第二次优化注释掉的
+        //UserHolder.saveUser(user);   // 修改前的
 
         UserHolder.saveUser(userDTO);
 

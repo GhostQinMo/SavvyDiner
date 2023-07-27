@@ -46,8 +46,9 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
 //        WebMvcConfigurer.super.addInterceptors(registry);   通过类名.super.方法可以名可以调用接口中的default方法
 
-
     }
+
+
 
 
 }

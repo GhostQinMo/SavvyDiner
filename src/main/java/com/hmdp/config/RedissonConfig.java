@@ -30,8 +30,11 @@ public class RedissonConfig {
         //创建redisson客户端
         return Redisson.create(config);
     }
-    //使用redisson的mutiLock(联锁)解决主从一致性带来的锁失效问题
 
+
+    /**
+     * 使用redisson的mutiLock(联锁)解决主从一致性带来的锁失效问题,即多把锁同时获取成功才能获取到临界资源的访问权限
+     */
    /* @Bean
     public RedissonClient getRedisClient1(){
         //配置
