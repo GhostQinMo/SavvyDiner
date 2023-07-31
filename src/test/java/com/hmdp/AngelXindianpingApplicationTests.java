@@ -195,10 +195,10 @@ public class AngelXindianpingApplicationTests {
     }
 
     /**
-     * 测试pipeline的性能
+     * 测试集群，准本上线
      */
     @Test
     public void Testpipelined(){
-
+        stringRedisTemplate.opsForValue().set("name","fairyqin_love");
     }
 }

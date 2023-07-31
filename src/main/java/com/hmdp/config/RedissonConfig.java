@@ -21,6 +21,7 @@ public class RedissonConfig {
     private String redisAddress;*/
 
 
+    //这里的Redisson是连接的Linux本地的redis，而其他地方的redis是连接主从复制的
     @Bean
     public RedissonClient getRedisClient(){
         //配置

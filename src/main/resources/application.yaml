@@ -9,8 +9,14 @@ spring:
     username: root
     password: FairyQin0817
   redis:
-    host: 192.168.241.128
-    port: 6379
+    #host: 192.168.241.128
+    #port: 6379
+    sentinel:
+      master: mymaster
+      nodes:
+        - 192.168.241.128:8881
+        - 192.168.241.128:8882
+        - 192.168.241.128:8883
     lettuce:
       pool:
         max-active: 10
@@ -24,5 +30,5 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
-reids:
-  address: redis://192.168.241.128:6379
+#reids:
+#  address: redis://192.168.241.128:6379
