@@ -15,11 +15,14 @@
 
 ## APP界面
 用户在指定的时间内抢购有限的商家发布的优惠券，用户可以在优惠券有效时间内提前在APP上预定餐品，用户可以到店用餐也可以打包带走的方式完成交易
+<!--
 <div style="display: flex; flex-wrap: wrap;">
   <img src="https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230801150126063.png" alt="Image 1" style="flex: 1; max-width: 33%; padding: 5px;">
   <img src="https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230801150007975.png" alt="Image 2" style="flex: 1; max-width: 33%; padding: 5px;">
   <img src="https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230722203607652.png" alt="Image 3" style="flex: 1; max-width: 33%; padding: 5px;">
 </div>
+-->
+![image-20230801162302683](https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230801162302683.png)
 
 
 
