@@ -340,7 +340,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         //如果下单成功，则将优惠卷id、用户id、订单id保存到阻塞队列
 
 
-
         //4.返回订单id
         return Result.ok(seckillOrderId);
 

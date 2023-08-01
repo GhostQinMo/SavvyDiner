@@ -42,7 +42,7 @@ public class IdGenerateFactory {
     private  static final int offset=32;
 
     /**
-     *
+     * 自定义id生成器
      * @param prefix
      * @return long
      */

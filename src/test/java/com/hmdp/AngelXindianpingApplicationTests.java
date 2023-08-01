@@ -43,7 +43,7 @@ public class AngelXindianpingApplicationTests {
     //TODO 测试前一定需要使用先启动这个测试单元，使得这些热点数据在缓存中，因为代码中使用的是逻辑过期来判断缓存是否过期的，如果不预热数据则查不到数据
     @Test
     public void addHostData(){
-        for (int i = 2; i <15 ; i++) {
+        for (int i = 0; i <15 ; i++) {
             shopServiceimpl.addHotShop((long) i,100L);
         }
     }
@@ -195,7 +195,7 @@ public class AngelXindianpingApplicationTests {
     }
 
     /**
-     * 测试集群，准本上线
+     * 测试集群，准备上线
      */
     @Test
     public void Testpipelined(){
