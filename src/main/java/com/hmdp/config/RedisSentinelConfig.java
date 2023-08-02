@@ -16,6 +16,10 @@ import org.springframework.context.annotation.Configuration;
  **/
 @Configuration
 public class RedisSentinelConfig {
+    /**
+     * 配置读写分离
+     * @return
+     */
     @Bean
     public LettuceClientConfigurationBuilderCustomizer clientConfigurationBuilderCustomizer(){
         return clientConfigurationBuilder ->clientConfigurationBuilder.readFrom(ReadFrom.REPLICA_PREFERRED);
