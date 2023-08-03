@@ -131,10 +131,7 @@ public class AngelXindianpingApplicationTests {
     @Test
     public void uploadShopLocationToRedisGEO(){
         //1.获取所有的商铺信息
-
         //2. 对商铺根据商铺的类型进行分组，以商铺typeid作为key，商铺的信息作为value保存在一个list中
-
-
         //3. 批量上传数据到redis中
         //3.1 但是redis是内存级别的，所有不能在redis保存所有的商铺信息，这里只缓存商铺id和longitude 和latitude ,主要用来做商铺定位
 

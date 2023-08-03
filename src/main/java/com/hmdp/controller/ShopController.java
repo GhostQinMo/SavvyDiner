@@ -34,7 +34,7 @@ public class ShopController {
     @GetMapping("/{id}")
     public Result queryShopById(@PathVariable("id") Long id) {
         //第四次优化：缓存此接口的查询内容
-//        return Result.ok(shopService.getById(id));
+        //return Result.ok(shopService.getById(id));
         return shopService.selectById(id);
     }
 

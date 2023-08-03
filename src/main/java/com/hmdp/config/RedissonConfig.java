@@ -1,5 +1,6 @@
 package com.hmdp.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -15,9 +16,10 @@ import org.springframework.context.annotation.Configuration;
  * @CreateDate 2023-06-05 16:51:13
  * @Description redisson客户端配置
  **/
+@Slf4j
 @Configuration
 public class RedissonConfig {
-   /* @Value("#{redis.address}")
+   /* @Value("${redis.address}")
     private String redisAddress;*/
 
 
@@ -53,6 +55,21 @@ public class RedissonConfig {
         //设置基本配置
         config.useSingleServer().setAddress("redis://192.168.241.128:6579");
         //创建redisson客户端
+        return Redisson.create(config);
+    }*/
+
+    //TODO 为什么这里注入不了属性？
+    /*@Value("${spring.redis.master}")
+    private String master;
+    @Value("${spring.redis.sentinel.nodes}")
+    private List<String> sentinelNodes;
+    //配置Redisson连接redis哨兵模式
+    @Bean
+    public RedissonClient redissonClient(){
+        Config config=new Config();
+        SentinelServersConfig sentinelServersConfig = config.useSentinelServers();
+        sentinelNodes.forEach(sentinelServersConfig::addSentinelAddress);
+        sentinelServersConfig.setMasterName(master);
         return Redisson.create(config);
     }*/
 }

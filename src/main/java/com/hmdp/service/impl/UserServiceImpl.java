@@ -43,7 +43,6 @@ import static com.hmdp.utils.RedisConstants.USER_SIGN_KEY;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 
-    //1. ioc自动注入StringRedisTemplate
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;

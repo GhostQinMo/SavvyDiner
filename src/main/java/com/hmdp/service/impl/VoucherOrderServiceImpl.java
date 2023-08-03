@@ -48,15 +48,11 @@ import static com.hmdp.utils.RedisConstants.SECKILL_ORDER_KEY;
 @Slf4j
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
 
-    //注入需要的实例
+
     @Autowired
     private IdGenerateFactory idGenerateFactory;
-
     @Autowired
     private ISeckillVoucherService seckillVoucherService;
-
-
-    //注入订单service
     @Autowired
     private IVoucherOrderService voucherOrderService;
 
@@ -66,13 +62,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private StringRedisTemplate stringRedisTemplate;
 
     //使用redisson来获取分布式锁
-
     @Resource
     private RedissonClient getRedisClient;
-
     @Resource
     private RedissonClient getRedisClient1;
-
     @Resource
     private RedissonClient getRedisClient2;
 
@@ -188,15 +181,16 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 //    @PostConstruct
     private void init() {
         SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
+
     }
 
     //优化：使用消息队列+redis实现秒杀，提高并发能力（这里的消息队列不再是jVM中的阻塞队列了，而是广泛应用的消息队列框架，但是这里演示使用的是
     // redis5.0新增的消息队列stream类型）
 
     //队列名字
-    private final static  String STRING_NAME="stream.orders";
-    private class VoucherOrderHandler implements Runnable {
+    private final static String STRING_NAME = "stream.orders";
 
+    private class VoucherOrderHandler implements Runnable {
         @Override
         public void run() {
             while (true) {
@@ -228,7 +222,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 }
             }
         }
-
 
 /*  优化：这里使用的JVM中的阻塞队列，而优化之后使用的是消息队列
     //使用jdk自带的阻塞队列
@@ -374,6 +367,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return;
         }
         save(voucherOrder);
-
     }
+
 }

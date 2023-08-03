@@ -146,6 +146,14 @@
             <artifactId>canal-spring-boot-starter</artifactId>
             <version>1.2.1-RELEASE</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.1.1-jre</version>
+        </dependency>
+
     </dependencies>
 
     <build>
