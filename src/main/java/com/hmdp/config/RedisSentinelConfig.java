@@ -3,7 +3,6 @@ package com.hmdp.config;
 import io.lettuce.core.ReadFrom;
 import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Black_ghost
@@ -14,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * @CreateDate 2023-07-31 22:27:57
  * @Description redis的主从复制+setntinel监控
  **/
-@Configuration
+//@Configuration
 public class RedisSentinelConfig {
     /**
      * 配置读写分离

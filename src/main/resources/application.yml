@@ -5,16 +5,20 @@ spring:
     name: hmdp
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.241.128:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: FairyQin0817
+    url: jdbc:mysql://47.243.242.192:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: hmdp
+    password: LmXrmbXn3Ey2Jr2c
   redis:
-    sentinel:
-      master: mymaster
-      nodes:
-        - 192.168.241.128:8881
-        - 192.168.241.128:8882
-        - 192.168.241.128:8883
+    host: 47.243.242.192
+    port: 36790
+    database: 0
+    password: redisAngelXin
+#    sentinel:
+#      master: mymaster
+#      nodes:
+#        - 192.168.241.128:8881
+#        - 192.168.241.128:8882
+#        - 192.168.241.128:8883
     lettuce:
       pool:
         max-active: 20   #连接池最大连接数（使用负值表示没有限制）

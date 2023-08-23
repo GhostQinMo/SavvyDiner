@@ -14,6 +14,8 @@ import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.hmdp.utils.RedisConstants;
+import com.hmdp.utils.RedisData;
+import com.hmdp.utils.RedisData_new;
 import com.hmdp.utils.SystemConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +86,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         //3. 如果命中则直接返回商铺信息
         if (!StrUtil.isBlankIfStr(shopjson)) {
-            final Shop shop = JSONUtil.toBean(shopjson, Shop.class);
+            //因为redis反转的redis多了个expireTime，所以这里需要转换一下
+             RedisData redisData = JSONUtil.toBean(shopjson, RedisData.class);
+             Shop shop =JSONUtil.toBean((JSONObject) redisData.getData(),Shop.class);
             log.info("从缓存中拿去商铺信息：商铺id为{}", id);
             return Result.ok(shop);
         }
@@ -132,8 +136,10 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         //3. 如果命中则直接返回商铺信息
         if (!StrUtil.isBlankIfStr(shopjson)) {
-            final Shop shop = JSONUtil.toBean(shopjson, Shop.class);
-            log.info("从缓存中拿去商铺信息：商铺id为{}", id);
+            //因为redis反转的redis多了个expireTime，所以这里需要转换一下
+             RedisData_new redisData_new = JSONUtil.toBean(shopjson, RedisData_new.class);
+            Shop shop =JSONUtil.toBean((JSONObject) redisData_new.getObject(),Shop.class);
+            log.debug("从缓存中拿去商铺信息：商铺id为{}", id);
             return Result.ok(shop);
         }
         //解决缓存穿透：缓存空串，因为StrUtil.isBlankIfStr(shopjson)会把""也判断为null,所以这里需要再次判断是否为空，只有真的为null采取查询数据库
@@ -173,7 +179,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             //  做duble-check
             shopjson = stringRedisTemplate.opsForValue().get(RedisConstants.CACHE_SHOP_KEY + id);
             if (!StrUtil.isBlankIfStr(shopjson)) {
-                final Shop shop = JSONUtil.toBean(shopjson, Shop.class);
+                //因为redis反转的redis多了个expireTime，所以这里需要转换一下
+                RedisData_new redisData_new = JSONUtil.toBean(shopjson, RedisData_new.class);
+                Shop shop =JSONUtil.toBean((JSONObject) redisData_new.getObject(),Shop.class);
                 log.info("从缓存中拿去商铺信息：商铺id为{}", id);
                 return Result.ok(shop);
             }

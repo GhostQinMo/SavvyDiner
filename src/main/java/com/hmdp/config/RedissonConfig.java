@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.redisson.config.SingleServerConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,7 +30,9 @@ public class RedissonConfig {
         //配置
         Config config =new Config();
         //设置基本配置
-        config.useSingleServer().setAddress("redis://192.168.241.128:6379");
+         SingleServerConfig singleServerConfig = config.useSingleServer();
+        singleServerConfig.setPassword("redisAngelXin");
+        singleServerConfig.setAddress("redis://47.243.242.192:36790");
         //创建redisson客户端
         return Redisson.create(config);
     }

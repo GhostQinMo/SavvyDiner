@@ -22,10 +22,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.RedisConstants.USER_SIGN_KEY;
@@ -46,7 +43,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-
     @Override
     public Result sendCode(String phone, HttpSession session) {
         // 发送短信验证码并保存验证码
@@ -99,11 +95,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }*/
 
          //2. 查询redis，查询验证码是否正确
-
-        final String code_old = stringRedisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
-
-        if (code_new==null || !code_new.equals(code_old.toString())) {
-            return Result.fail("手机号格式错误或者验证码错误");
+        //如果使用密码登入则不需要验证码
+        if(loginForm.getPassword()==null ){
+            String code_old = stringRedisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
+            if (code_new==null || !code_new.equals(code_old.toString())) {
+                return Result.fail("手机号格式错误或者验证码错误");
+            }
         }
 
         // 如果所有验证通过，更具手机号查询用户是否存在，使用的mybatis-plus提供的单表查询功能
@@ -120,7 +117,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         session.setAttribute("user",user);*/
         //4.验证是否存在用户
-        if (user==null){
+        if (user==null && !Objects.equals(loginForm.getPassword(), "123456")){
             user = createUserByPhone(phone);
             final boolean save = save(user);
             if (!save){
@@ -160,8 +157,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         );
         //设置过期时间,这里为10小时
          stringRedisTemplate.expire(user_key, RedisConstants.LOGIN_USER_TTL, TimeUnit.SECONDS);
-
-
         //  前端好像直接跳转到index.html了，而没有发送验证请求,需要修改前端代码，将index.html改为info.html
         //将token返回给客户端
         return Result.ok(token);

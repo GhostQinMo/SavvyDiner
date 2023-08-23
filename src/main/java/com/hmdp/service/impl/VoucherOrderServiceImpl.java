@@ -2,7 +2,9 @@ package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.hash.BloomFilter;
 import com.hmdp.dto.Result;
+import com.hmdp.entity.User;
 import com.hmdp.entity.VoucherOrder;
 import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
@@ -14,13 +16,14 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.util.Collections;
@@ -29,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.hmdp.utils.RedisConstants.ORDER_LOCK_PREFIX;
 import static com.hmdp.utils.RedisConstants.SECKILL_ORDER_KEY;
@@ -69,6 +73,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private RedissonClient getRedisClient2;
 
+    //在这里初始化布隆过滤器
+    @Autowired
+    BloomFilter<String> boomFilter;
+    @Autowired
+    UserServiceImpl userService;
 
     /*@Override
     public Result  seckillVoucher_old(Long voucherId) {
@@ -168,7 +177,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     static {
         SECKILLSCRIPT = new DefaultRedisScript<>();
         //加载外部lua脚本文件
-        SECKILLSCRIPT.setLocation(new ClassPathResource("seckill.lua"));
+//        SECKILLSCRIPT.setLocation(new ClassPathResource("seckill.lua"));
+        //使用服务器绝对路径
+        SECKILLSCRIPT.setLocation(new FileSystemResource("/www/server/nginx/html/hmdp/LUAScript/seckill.lua"));
         //设置脚本返回值
         SECKILLSCRIPT.setResultType(Long.class);
     }
@@ -178,8 +189,15 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
 
     //在类初始化之后执行，因为当这个类初始化好了之后，随时都是有可能要执行的
-//    @PostConstruct
+    @PostConstruct
     private void init() {
+        //初始化布隆过滤器,判断用户根据id查询是否存在
+        //先拿到所有用户的id
+        List<Long> userIds =userService.list().stream().map(User::getId).collect(Collectors.toList());
+        //初始化布隆过滤器
+        for (Long userId : userIds) {
+            boomFilter.put(String.valueOf(userId));
+        }
         SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
 
     }
@@ -190,9 +208,16 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     //队列名字
     private final static String STRING_NAME = "stream.orders";
 
+
+
     private class VoucherOrderHandler implements Runnable {
         @Override
         public void run() {
+            //先判断是否存在队列
+            if (!stringRedisTemplate.hasKey(STRING_NAME)) {
+                //不存在，创建队列，从最新消息开始读取
+                stringRedisTemplate.opsForStream().createGroup(STRING_NAME, ReadOffset.from("0-0"), "g1");
+            }
             while (true) {
                 try {
                     // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >

@@ -61,7 +61,9 @@ public class UserController {
     @PostMapping("/logout")
     public Result logout(){
         // TODO 实现登出功能
-        return Result.fail("功能未完成");
+//        return Result.fail("功能未完成");
+        //直接返回ok，前端会清除token，跳转到首页
+        return Result.ok();
     }
 
     @GetMapping("/me")

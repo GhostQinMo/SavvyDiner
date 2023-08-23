@@ -1,5 +1,6 @@
 package com.hmdp;
 
+import com.google.common.hash.BloomFilter;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
 import com.hmdp.service.impl.ShopServiceImpl;
@@ -197,5 +198,13 @@ public class AngelXindianpingApplicationTests {
     @Test
     public void Testpipelined(){
         stringRedisTemplate.opsForValue().set("name","fairyqin_love");
+    }
+
+    //GuavaBlooomFilter过滤器测试，预热数据
+    @Autowired
+    BloomFilter<String> bloomFilter;
+
+    @Test
+    public void addHotdata(){
     }
 }
