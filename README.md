@@ -22,12 +22,12 @@
   <img src="https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230722203607652.png" alt="Image 3" style="flex: 1; max-width: 33%; padding: 5px;">
 </div>
 -->
-![image-20230801162302683](https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230801162302683.png)
+![image-20230801162302683](https://angelxinnotesimages.oss-cn-hangzhou.aliyuncs.com/redis6/image-20230801162302683.png)
 
 
 
 ## 高性能分析
-![image-20210821080511581](https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20210821080511581.png)
+![image-20210821080511581](https://angelxinnotesimages.oss-cn-hangzhou.aliyuncs.com/redis6/image-20210821080511581.png)
 
 在项目中，我实现了一个高效的多级缓存策略，充分利用请求处理的每个环节，从浏览器端到服务端，以及各个中间层，均设置了缓存，以减轻Tomcat压力，提升服务性能。
 
@@ -41,7 +41,7 @@
 
 ## 项目监控
 通过使用Docker Compose搭建Portainer容器实例，监控所有运行容器实例的健康状态、资源使用情况和性能表现等
-![image-20230801155302791](https://cdn.staticaly.com/gh/GhostQinMo/ImageBed@master/redis6/image-20230801155302791.png)
+![image-20230801155302791](https://angelxinnotesimages.oss-cn-hangzhou.aliyuncs.com/redis6/image-20230801155302791.png)
 
 ## 贡献
 
